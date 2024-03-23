@@ -53,6 +53,6 @@ const (
 
 const (
 	StateSearchKey = iota
-	StateParseKey
+	StateParseKey  = iota
 	StateParseValue
 )
