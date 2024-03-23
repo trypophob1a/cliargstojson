@@ -1,0 +1,123 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      TEST_OUTPUT: ${{ github.workspace }}/test_output.txt
+      COVERAGE_FILE: ${{ github.workspace }}/coverage.txt
+      COVERAGE_ALL: ${{ github.workspace }}/coverages.out
+      HAS_GO_FILES: "false"
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get changed folders
+        id: changed
+        run: |
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | awk -F / '{print $1}' | sort -u | xargs | sed -e 's/ /,/g')
+          IFS=',' read -ra folders <<< "$changed"
+          echo "folders=${folders[*]}" >> $GITHUB_OUTPUT
+
+      - name: Print changed folders
+        run: |
+          echo "CHANGED FOLDERS:  ${{ steps.changed.outputs.folders }}"
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ^1.20
+      - name: Run tests
+        run: |
+          touch "${{ env.COVERAGE_FILE }}"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            folders="${{ steps.changed.outputs.folders }}"
+            if [ "$folders" != "" ]; then
+              echo "HAS_GO_FILES=true" >> $GITHUB_ENV
+              IFS=' ' read -ra folder_array <<< "$folders"
+              mode_printed=false
+              for folder in "${folder_array[@]}"; do
+                if [ "$folders" != " " ]; then
+                  go test -race -covermode atomic -coverprofile=coverage.out.$folder ./$folder/... | tee -a "${{ env.TEST_OUTPUT }}"
+    
+                  if ! $mode_printed; then
+                    cat coverage.out.$folder >> "${{ env.COVERAGE_ALL }}"
+                    mode_printed=true
+                  else
+                    tail -n +2 coverage.out.$folder >> "${{ env.COVERAGE_ALL }}"
+                  fi
+                  go tool cover -func=coverage.out.$folder >> "${{ env.COVERAGE_FILE }}"
+                fi
+              done
+              total=$(grep -Po 'total:\s+\(statements\)\s+\K\d+(\.\d+)?\%' "${{ env.COVERAGE_FILE }}" || true)
+              IFS='\n' read -ra totals <<< "$total"
+              count=0
+              percents=0
+              for percent in "${totals[@]}"; do
+                  percent=$(echo $percent | tr -d '%')
+                  percents=$(echo "$percents + $percent" | bc)
+                  count=$((count + 1))
+              done
+              total=0
+              if [ $count -gt 0 ]; then
+                total=$(echo "scale=2; $percents / $count" | bc)
+              fi
+              if (( $(echo "$total < 75" | bc -l) )); then
+                  echo -e "\e[31mCoverage is below 75%\e[0m"
+                  exit 1
+              fi
+            fi
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+              go test -race -covermode atomic -coverprofile="${{ env.COVERAGE_ALL }}" ./... | tee -a $TEST_OUTPUT || true
+              go tool cover -func="${{ env.COVERAGE_ALL }}" > $COVERAGE_FILE
+              if [ -f "${{ env.COVERAGE_ALL }}" ]; then
+                 echo "HAS_GO_FILES=true" >> $GITHUB_ENV
+              fi
+          fi
+
+      - name: Check failures
+        run: |
+          if grep -q "FAIL" "${{ env.TEST_OUTPUT }}"; then
+            echo -e "\e[31mFailed tests detected!\e[0m"
+            FAIL_LINES=$(grep -B2 FAIL "${{ env.TEST_OUTPUT }}" | grep -E -o 'RUN .*|.+[.]go:[0-9]+: .*|\-\-\- FAIL: .* \(0\.00s\)')
+            IFS=$'\n'
+            for FAIL_LINE in $FAIL_LINES; do
+              echo -e "\e[31mTest: ${FAIL_LINE}\e[0m"
+            done
+            exit 1
+          fi
+
+      - name: Send coverage
+        if: ${{ env.HAS_GO_FILES == 'true' }}
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: ${{ env.COVERAGE_ALL }}
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get changed folders
+        id: changed
+        run: |
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | awk -F / '{print $1}' | sort -u | xargs | sed -e 's/ /,/g') 
+          folder=$(echo "$changed" | sed 's/\<\([^,]*\)\>/.\/\1/g' | sed 's/,/ /g')
+          echo "folders=$folder"  >> $GITHUB_OUTPUT
+
+      - name: Print changed folders
+        run: |
+          echo "CHANGED FOLDERS:  ${{ steps.changed.outputs.folders }}"
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ^1.20
+
+      - name: Install linter
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --config ${{ github.workspace }}/.golangci.yml ${{ steps.changed.outputs.folders }}
