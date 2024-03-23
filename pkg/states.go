@@ -1,4 +1,4 @@
-package cliargstojson
+package pkg
 
 const (
 	TokenTypeUnknown = iota
