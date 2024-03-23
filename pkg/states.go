@@ -58,5 +58,5 @@ const (
 )
 
 func KekG() {
-	println("KEKG")
+	println(StateSearchKey)
 }
