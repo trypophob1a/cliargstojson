@@ -56,3 +56,7 @@ const (
 	StateParseKey  = iota
 	StateParseValue
 )
+
+func KekG()  {
+	println("KEKG")
+}
