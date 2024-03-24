@@ -24,11 +24,123 @@ jobs:
       - name: Get changed folders
         id: changed
         run: |
-          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '*.go$')
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$')
           echo "changed=$changed"
           # Создаем пустой массив для хранения папок с функциями
           folders_with_functions=()
+          for file in $changed; do
+            # Определяем путь к директории файла
+            if pcregrep -M '^(\s|\s+)?func\s+(?!main)' "$file"; then
+              echo "$file"
+              dirPath=$(dirname "$file")
+              # Добавляем папку файла в массив, если она еще не добавлена
+              if [[ ! " ${folders_with_functions[@]} " =~ " ${dirPath} " ]]; then
+               folders_with_functions+=("${dirPath}")
+              fi
+            fi
+          done
           
+          # Преобразуем массив папок с функциями в строку, разделенную запятыми
+          echo "folders=${folders_with_functions[*]}" >> $GITHUB_OUTPUT
+      - name: Print changed folders
+        run: |
+          echo "CHANGED FOLDERS:  ${{ steps.changed.outputs.folders }}"
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ^1.20
+      - name: Run tests
+        run: |
+          touch "${{ env.COVERAGE_FILE }}"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            folders="${{ steps.changed.outputs.folders }}"
+            if [ "$folders" != "" ]; then
+              echo "HAS_GO_FILES=true" >> $GITHUB_ENV
+              IFS=' ' read -ra folder_array <<< "$folders"
+              mode_printed=false
+              for folder in "${folder_array[@]}"; do
+                if [ "$folders" != " " ]; then
+                  go test -race -covermode atomic -coverprofile=coverage.out.$folder ./$folder/... | tee -a "${{ env.TEST_OUTPUT }}"
+    
+                  if ! $mode_printed; then
+                    cat coverage.out.$folder >> "${{ env.COVERAGE_ALL }}"
+                    mode_printed=true
+                  else
+                    tail -n +2 coverage.out.$folder >> "${{ env.COVERAGE_ALL }}"
+                  fi
+                  go tool cover -func=coverage.out.$folder >> "${{ env.COVERAGE_FILE }}"
+                fi
+              done
+              total=$(grep -Po 'total:\s+\(statements\)\s+\K\d+(\.\d+)?\%' "${{ env.COVERAGE_FILE }}" || true)
+              IFS='\n' read -ra totals <<< "$total"
+              count=0
+              percents=0
+              for percent in "${totals[@]}"; do
+                  percent=$(echo $percent | tr -d '%')
+                  percents=$(echo "$percents + $percent" | bc)
+                  count=$((count + 1))
+              done
+              total=0
+              if [ $count -gt 0 ]; then
+                total=$(echo "scale=2; $percents / $count" | bc)
+              fi
+              if (( $(echo "$total < 75" | bc -l) )); then
+                  echo -e "\e[31mCoverage is below 75%\e[0m"
+                  exit 1
+              fi
+            fi
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+              go test -race -covermode atomic -coverprofile="${{ env.COVERAGE_ALL }}" ./... | tee -a $TEST_OUTPUT || true
+              go tool cover -func="${{ env.COVERAGE_ALL }}" > $COVERAGE_FILE
+              if [ -f "${{ env.COVERAGE_ALL }}" ]; then
+                 echo "HAS_GO_FILES=true" >> $GITHUB_ENV
+              fi
+          fi
+
+      - name: Check failures
+        run: |
+          if grep -q "FAIL" "${{ env.TEST_OUTPUT }}"; then
+            echo -e "\e[31mFailed tests detected!\e[0m"
+            FAIL_LINES=$(grep -B2 FAIL "${{ env.TEST_OUTPUT }}" | grep -E -o 'RUN .*|.+[.]go:[0-9]+: .*|\-\-\- FAIL: .* \(0\.00s\)')
+            IFS=$'\n'
+            for FAIL_LINE in $FAIL_LINES; do
+              echo -e "\e[31mTest: ${FAIL_LINE}\e[0m"
+            done
+            exit 1
+          fi
+
+      - name: Send coverage
+        if: ${{ env.HAS_GO_FILES == 'true' }}
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: ${{ env.COVERAGE_ALL }}
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get changed folders
+        id: changed
+        run: |
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | awk -F / '{print $1}' | sort -u | xargs | sed -e 's/ /,/g')
+          IFS=',' read -ra folders <<< "$changed"
+          current_folders=()
+          has_root_dir=0
+          for folder in "${folders[@]}"; do
+            if [[ "$folder" == *".go" ]]; then
+              if [ $has_root_dir -eq 0 ]; then
+                has_root_dir=1
+                current_folders+=(".")
+              fi
+            else
+              current_folders+=("$folder")
+            fi
+          done
+          echo "folders=${current_folders[*]}" >> $GITHUB_OUTPUT
+
       - name: Print changed folders
         run: |
           echo "CHANGED FOLDERS:  ${{ steps.changed.outputs.folders }}"
