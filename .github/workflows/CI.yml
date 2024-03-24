@@ -128,6 +128,7 @@ jobs:
           current_folders=()
           has_root_dir=0
           for folder in "${folders[@]}"; do
+            echo "folder=$folder"
             if [[ "$folder" == *".go" ]]; then
               if [ $has_root_dir -eq 0 ]; then
                 has_root_dir=1

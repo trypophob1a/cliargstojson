@@ -1,5 +1,5 @@
 package ggg
 
 func World() {
-	println("ggg")
+	println("gg")
 }
