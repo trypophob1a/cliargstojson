@@ -1,8 +1,8 @@
-package cliargstojson
+package consts
 
 import "testing"
 
-func TestKekG(t *testing.T) {
+func TestWin(t *testing.T) {
 	tests := []struct {
 		name string
 	}{

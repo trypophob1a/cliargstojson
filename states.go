@@ -56,7 +56,3 @@ const (
 	StateParseKey  = iota
 	StateParseValue
 )
-
-func Win() {
-	println(StateParseKey)
-}
