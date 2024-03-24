@@ -22,8 +22,8 @@ jobs:
           IFS=',' read -ra folders <<< "$changed"
           # Проверяем, является ли измененный элемент файлом
           if [[ "$changed" == *".go" ]]; then
-          # Если это файл, присваиваем переменной folders корневую директорию
-          folders="."
+            # Если это файл, присваиваем переменной folders корневую директорию
+            folders=""
           fi
           echo "folders=${folders[*]}" >> $GITHUB_OUTPUT
       - name: Print changed folders
