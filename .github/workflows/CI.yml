@@ -29,7 +29,6 @@ jobs:
           folders_with_functions=()
           for file in $changed; do
             # Определяем путь к директории файла
-            folder=$(dirname "$file")
             if pcregrep -M '^(\s|\s+)?func\s+(?!main)' "$file"; then
               echo "$file"
               # Добавляем папку файла в массив, если она еще не добавлена
