@@ -12,13 +12,16 @@ jobs:
       COVERAGE_ALL: ${{ github.workspace }}/coverages.out
       HAS_GO_FILES: "false"
     steps:
+      - name: Install pcregrep
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pcregrep
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Get changed folders
         id: changed
         run: |
-          sudo apt-get install pcregrep
           changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$')
           
           # Создаем пустой массив для хранения папок с функциями
