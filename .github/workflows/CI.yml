@@ -134,7 +134,7 @@ jobs:
           for path in ${paths[@]}; do
             # Определяем путь к директории файла
             folder=$(dirname "$path")
-            if pcregrep -M '.+' "$path"; then
+            if pcregrep -M '.' "$path"; then
             echo "$path"
               if [[ ! " ${current_folders[@]} " =~ " ${folder} " ]]; then
                 current_folders+=("$folder")
