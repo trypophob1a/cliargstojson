@@ -32,7 +32,7 @@ jobs:
             folder=$(dirname "$path")
             if pcregrep -M '^(\s|\s+)?func\s+(?!main)' "$path"; then
               echo "$path"
-              # Добавляем папку файла в массив, если она еще не добавлена
+        
               if [[ ! " ${folders_with_functions[@]} " =~ " ${folder} " ]]; then
                folders_with_functions+=("$folder")
               fi
