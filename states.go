@@ -49,8 +49,8 @@ const (
 // family. mother. name="Jane Doe-Hopkins" age=55
 // father. name="Robert Doe-Hopkins" age=57
 // -person. isMarried=false
-// companies=[g2. position="developer" years=5, cow ball. position="manager" years=2]
-//
+// companies=[g2. position="developer" years=5, cow ball. position="manager" years=2].
+
 const (
 	StateSearchKey = iota
 	StateParseKey  = iota

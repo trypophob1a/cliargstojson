@@ -25,12 +25,13 @@ jobs:
         run: |
           changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$'  | sort -u | xargs | sed -e 's/ /,/g')
           # Создаем пустой массив для хранения папок с функциями
+          IFS=',' read -ra paths <<< "$changed"
           folders_with_functions=()
-          for file in $changed; do
+          for path in ${paths[@]}; do
             # Определяем путь к директории файла
-            folder=$(dirname "$file")
-            if pcregrep -M '^(\s|\s+)?func\s+(?!main)' "$file"; then
-              echo "$file"
+            folder=$(dirname "$path")
+            if pcregrep -M '^(\s|\s+)?func\s+(?!main)' "$path"; then
+              echo "$path"
               # Добавляем папку файла в массив, если она еще не добавлена
               if [[ ! " ${folders_with_functions[@]} " =~ " ${folder} " ]]; then
                folders_with_functions+=("$folder")
