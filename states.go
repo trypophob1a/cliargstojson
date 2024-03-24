@@ -57,7 +57,7 @@ const (
 	StateParseValue
 )
 
-func Wer() {
+func Win() {
 	println(StateParseKey)
 }
 
