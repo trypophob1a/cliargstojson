@@ -124,7 +124,7 @@ jobs:
       - name: Get changed folders
         id: changed
         run: |
-          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | awk -F / '{print $1}' | sort -u | xargs | sed -e 's/ /,/g')
+          changed=$(git diff --name-only --diff-filter=AM ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | xargs | sed -e 's/ /,/g')          
           IFS=',' read -ra folders <<< "$changed"
           current_folders=()
           has_root_dir=0
