@@ -27,19 +27,7 @@ jobs:
           changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$')
           echo "$changed"
           # Создаем пустой массив для хранения папок с функциями
-          folders_with_functions=()
-          for file in $changed; do
-            # Определяем путь к директории файла
-            if pcregrep -M '^(\s|\s+)?func\s+(?!main)' "$file"; then
-              echo "$file"
-              dirPath=$(dirname "$file")
-              # Добавляем папку файла в массив, если она еще не добавлена
-              if [[ ! " ${folders_with_functions[@]} " =~ " ${dirPath} " ]]; then
-               folders_with_functions+=("${dirPath}")
-              fi
-            fi
-          done
-          
+                    
           # Преобразуем массив папок с функциями в строку, разделенную запятыми
           echo "folders=${folders_with_functions[*]}" >> $GITHUB_OUTPUT
       - name: Print changed folders
