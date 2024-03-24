@@ -23,7 +23,9 @@ jobs:
           # Проверяем, является ли измененный элемент файлом
           if [[ "$changed" == *".go" ]]; then
             # Если это файл, присваиваем переменной folders корневую директорию
-            folders="."
+            folders=""
+            changed=""
+          fi
           if [ "$folders" != "" ]; then
             echo "HAS_GO_FILES=true" >> $GITHUB_ENV
           fi
