@@ -1,5 +1,5 @@
 package ggg
 
-func Ggg() {
+func Wed() {
 	println("ggg")
 }
