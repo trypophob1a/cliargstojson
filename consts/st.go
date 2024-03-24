@@ -1,6 +1,6 @@
 package consts
 
-// my colors
+// my colors.
 const (
 	R = iota
 	G
