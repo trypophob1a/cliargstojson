@@ -57,6 +57,6 @@ const (
 	StateParseValue
 )
 
-func KeKW() {
+func KEKWE() {
 	println(StateParseKey)
 }

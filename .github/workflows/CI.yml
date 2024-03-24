@@ -116,9 +116,21 @@ jobs:
       - name: Get changed folders
         id: changed
         run: |
-          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | awk -F / '{print $1}' | sort -u | xargs | sed -e 's/ /,/g') 
-          folder=$(echo "$changed" | sed 's/\<\([^,]*\)\>/.\/\1/g' | sed 's/,/ /g')
-          echo "folders=$folder"  >> $GITHUB_OUTPUT
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | awk -F / '{print $1}' | sort -u | xargs | sed -e 's/ /,/g')
+          IFS=',' read -ra folders <<< "$changed"
+          current_folders=()
+          has_root_dir=0
+          for folder in "${folders[@]}"; do
+            if [[ "$folder" == *".go" ]]; then
+              if [ $has_root_dir -eq 0 ]; then
+                has_root_dir=1
+                current_folders+=(".")
+              fi
+            else
+              current_folders+=("$folder")
+            fi
+          done
+          echo "folders=${current_folders[*]}" >> $GITHUB_OUTPUT
 
       - name: Print changed folders
         run: |
