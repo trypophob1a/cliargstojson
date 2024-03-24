@@ -118,24 +118,25 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - name: Install pcregrep
+        run: |
+          sudo apt-get install -y pcregrep
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Get changed folders
         id: changed
         run: |
-          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | awk -F / '{print $1}' | sort -u | xargs | sed -e 's/ /,/g')         
-          IFS=',' read -ra folders <<< "$changed"
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$'  | sort -u | xargs | sed -e 's/ /,/g')
+          # Создаем пустой массив для хранения папок с функциями
+          IFS=',' read -ra paths <<< "$changed"
           current_folders=()
-          has_root_dir=0
-          for folder in "${folders[@]}"; do
-            if [[ "$folder" == *".go" ]]; then
-              if [ $has_root_dir -eq 0 ]; then
-                has_root_dir=1
-                current_folders+=(".")
-              fi
-            else
-              if [ -d "$(dirname "$folder")" ]; then
+          for path in ${paths[@]}; do
+            # Определяем путь к директории файла
+            folder=$(dirname "$path")
+            if pcregrep -M '.+' "$path"; then
+            echo "$path"
+              if [[ ! " ${current_folders[@]} " =~ " ${folder} " ]]; then
                 current_folders+=("$folder")
               fi
             fi
