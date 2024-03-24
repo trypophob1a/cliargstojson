@@ -24,7 +24,7 @@ jobs:
       - name: Get changed folders
         id: changed
         run: |
-          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$')
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '*.go$')
           echo "changed=$changed"
           # Создаем пустой массив для хранения папок с функциями
           folders_with_functions=()
