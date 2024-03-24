@@ -1,5 +1,5 @@
 package pkg
 
-func Hellouuu() {
+func Hello() {
 	println("hellouuu")
 }

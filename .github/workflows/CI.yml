@@ -18,21 +18,26 @@ jobs:
       - name: Get changed folders
         id: changed
         run: |
-          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | awk -F / '{print $1}' | sort -u | xargs | sed -e 's/ /,/g')
-          IFS=',' read -ra folders <<< "$changed"
-          current_folders=()
-          has_root_dir=0
-          for folder in "${folders[@]}"; do
-            if [[ "$folder" == *".go" ]]; then
-              if [ $has_root_dir -eq 0 ]; then
-                has_root_dir=1
-                current_folders+=(".")
+          sudo apt-get install pcregrep
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$')
+          
+          # Создаем пустой массив для хранения папок с функциями
+          folders_with_functions=()
+          for file in $changed; do
+            # Определяем путь к директории файла
+            folder=$(dirname "$file")
+            if pcregrep -M '^(\s|\s+)?func\s+(?!main)' "$PWD/$file"; then
+              echo "$file"
+              # Добавляем папку файла в массив, если она еще не добавлена
+              if [[ ! " ${folders_with_functions[@]} " =~ " ${folder} " ]]; then
+               folders_with_functions+=("$folder")
               fi
-            else
-              current_folders+=("$folder")
             fi
           done
-          echo "folders=${current_folders[*]}" >> $GITHUB_OUTPUT
+          
+          # Преобразуем массив папок с функциями в строку, разделенную запятыми
+          folders_with_functions_str=$(IFS=','; echo "${folders_with_functions[*]}")
+          echo "folders=${folders_with_functions_str[*]}" >> $GITHUB_OUTPUT
       - name: Print changed folders
         run: |
           echo "CHANGED FOLDERS:  ${{ steps.changed.outputs.folders }}"

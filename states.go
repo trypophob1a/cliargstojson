@@ -57,6 +57,10 @@ const (
 	StateParseValue
 )
 
-func KekWe() {
+func Wet() {
 	println(StateParseKey)
+}
+
+func KekWe2() {
+	println(StateParseValue)
 }
