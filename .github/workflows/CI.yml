@@ -25,7 +25,7 @@ jobs:
         id: changed
         run: |
           changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$')
-          # Создаем пустой массив для хранения папок с функциями
+          
           folders_with_functions=()
           for file in $changed; do
             # Определяем путь к директории файла
