@@ -60,7 +60,3 @@ const (
 func Win() {
 	println(StateParseKey)
 }
-
-func KekWe2() {
-	println(StateParseValue)
-}
