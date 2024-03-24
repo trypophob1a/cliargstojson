@@ -36,8 +36,7 @@ jobs:
           done
           
           # Преобразуем массив папок с функциями в строку, разделенную запятыми
-          folders_with_functions_str=$(IFS=','; echo "${folders_with_functions[*]}")
-          echo "folders=${folders_with_functions_str[*]}" >> $GITHUB_OUTPUT
+          echo "folders=${folders_with_functions[*]}" >> $GITHUB_OUTPUT
       - name: Print changed folders
         run: |
           echo "CHANGED FOLDERS:  ${{ steps.changed.outputs.folders }}"

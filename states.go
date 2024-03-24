@@ -57,7 +57,7 @@ const (
 	StateParseValue
 )
 
-func Wet() {
+func Wer() {
 	println(StateParseKey)
 }
 
