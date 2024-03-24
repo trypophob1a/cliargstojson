@@ -50,7 +50,7 @@ const (
 // father. name="Robert Doe-Hopkins" age=57
 // -person. isMarried=false
 // companies=[g2. position="developer" years=5, cow ball. position="manager" years=2]
-
+//
 const (
 	StateSearchKey = iota
 	StateParseKey  = iota

@@ -7,6 +7,6 @@ const (
 	B
 )
 
-func Wint() {
+func Win() {
 	println(R)
 }
