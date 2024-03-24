@@ -24,7 +24,7 @@ jobs:
           if [[ "$changed" == *".go" ]]; then
             # Если это файл, присваиваем переменной folders корневую директорию
             folders=""
-            changed=""
+            changed="."
           if [ "$folders" != "" ]; then
             echo "HAS_GO_FILES=true" >> $GITHUB_ENV
           fi
