@@ -32,7 +32,7 @@ jobs:
             folder=$(dirname "$path")
             if pcregrep -M '^(\s|\s+)?func\s+(?!main)' "$path"; then
               echo "$path"
-        
+          
               if [[ ! " ${folders_with_functions[@]} " =~ " ${folder} " ]]; then
                folders_with_functions+=("$folder")
               fi
@@ -61,7 +61,7 @@ jobs:
               for folder in "${folder_array[@]}"; do
                 if [ "$folders" != " " ]; then
                   go test -race -covermode atomic -coverprofile=coverage.out.$folder ./$folder/... | tee -a "${{ env.TEST_OUTPUT }}"
-    
+          
                   if ! $mode_printed; then
                     cat coverage.out.$folder >> "${{ env.COVERAGE_ALL }}"
                     mode_printed=true
@@ -124,8 +124,7 @@ jobs:
       - name: Get changed folders
         id: changed
         run: |
-          changed=$(git diff --name-only --diff-filter=AM ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | xargs | sed -e 's/ /,/g')          
-          IFS=',' read -ra folders <<< "$changed"
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | awk -F / '{print $1}' | sort -u | xargs | sed -e 's/ /,/g')          IFS=',' read -ra folders <<< "$changed"
           current_folders=()
           has_root_dir=0
           for folder in "${folders[@]}"; do
@@ -135,7 +134,9 @@ jobs:
                 current_folders+=(".")
               fi
             else
-              current_folders+=("$folder")
+              if [ -d "$(dirname "$folder")" ]; then
+                current_folders+=("$folder")
+              fi
             fi
           done
           echo "folders=${current_folders[*]}" >> $GITHUB_OUTPUT
