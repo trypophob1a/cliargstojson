@@ -52,9 +52,6 @@ jobs:
           check-latest: true
           cache-dependency-path: |
             go.sum
-            subdir/go.sum
-            tools/go.sum
-            "**/*.sum"
       - name: Run tests
         run: |
           touch "${{ env.COVERAGE_FILE }}"
