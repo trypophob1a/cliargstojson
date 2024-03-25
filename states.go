@@ -19,16 +19,14 @@ const (
     ],
     "companies": [
       {
-        "g2": {
+          "company": "g2",
           "position": "developer",
           "years": 5
-        }
       },
       {
-        "cow ball": {
+          "company":"cow ball"
           "position": "manager",
           "years": 2
-        }
       }
     ],
     "isMarried": false,
@@ -45,12 +43,13 @@ const (
   }
 */
 
-// -person. name="John Doe-Hopkins" age=30
-// phones=["+1 234 567 8901", "+1 234 567 8902"]
-// family. mother. name="Jane Doe-Hopkins" age=55
-// father. name="Robert Doe-Hopkins" age=57
-// -person. isMarried=false
-// companies=[g2. position="developer" years=5, cow ball. position="manager" years=3].
+// person{name="John Doe-Hopkins" age=25 phones["555-222" "777-52"]
+// companies[
+//  {company ="g2" position="developer" years=5}
+//  {company ="cowbell" position="manager" years=2}
+// ]
+// isMarried=false family{mother{name="Jane Doe-Hopkins" age=57}
+// father{name="Robert Doe-Hopkins" age=57}}
 
 const (
 	StateSearchKey = iota
