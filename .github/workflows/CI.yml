@@ -12,16 +12,35 @@ jobs:
       COVERAGE_ALL: ${{ github.workspace }}/coverages.out
       HAS_GO_FILES: "false"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Install pcregrep
+        run: |
+          sudo apt-get install -y pcregrep
+
       - name: Get changed folders
         id: changed
         run: |
-          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | awk -F / '{print $1}' | sort -u | xargs | sed -e 's/ /,/g')
-          IFS=',' read -ra folders <<< "$changed"
-          echo "folders=${folders[*]}" >> $GITHUB_OUTPUT
-
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$'  | sort -u | xargs | sed -e 's/ /,/g')
+          # Создаем пустой массив для хранения папок с функциями
+          IFS=',' read -ra paths <<< "$changed"
+          folders_with_functions=()
+          for path in ${paths[@]}; do
+            # Определяем путь к директории файла
+            folder=$(dirname "$path")
+            if pcregrep -M '^(\s|\s+)?func\s+(?!main)' "$path"; then
+              echo "$path"
+          
+              if [[ ! " ${folders_with_functions[@]} " =~ " ${folder} " ]]; then
+               folders_with_functions+=("$folder")
+              fi
+            fi
+          done
+          
+          # Преобразуем массив папок с функциями в строку, разделенную запятыми
+          echo "folders=${folders_with_functions[*]}" >> $GITHUB_OUTPUT
       - name: Print changed folders
         run: |
           echo "CHANGED FOLDERS:  ${{ steps.changed.outputs.folders }}"
@@ -42,7 +61,7 @@ jobs:
               for folder in "${folder_array[@]}"; do
                 if [ "$folders" != " " ]; then
                   go test -race -covermode atomic -coverprofile=coverage.out.$folder ./$folder/... | tee -a "${{ env.TEST_OUTPUT }}"
-    
+          
                   if ! $mode_printed; then
                     cat coverage.out.$folder >> "${{ env.COVERAGE_ALL }}"
                     mode_printed=true
@@ -99,15 +118,30 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Install pcregrep
+        run: |
+          sudo apt-get install -y pcregrep
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Get changed folders
         id: changed
         run: |
-          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$' | awk -F / '{print $1}' | sort -u | xargs | sed -e 's/ /,/g') 
-          folder=$(echo "$changed" | sed 's/\<\([^,]*\)\>/.\/\1/g' | sed 's/,/ /g')
-          echo "folders=$folder"  >> $GITHUB_OUTPUT
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.go$'  | sort -u | xargs | sed -e 's/ /,/g')
+          # Создаем пустой массив для хранения папок с функциями
+          IFS=',' read -ra paths <<< "$changed"
+          current_folders=()
+          for path in ${paths[@]}; do
+            # Определяем путь к директории файла
+            folder=$(dirname "$path")
+            if pcregrep -M '.' "$path"; then
+            echo "$path"
+              if [[ ! " ${current_folders[@]} " =~ " ${folder} " ]]; then
+                current_folders+=("$folder")
+              fi
+            fi
+          done
+          echo "folders=${current_folders[*]}" >> $GITHUB_OUTPUT
 
       - name: Print changed folders
         run: |
