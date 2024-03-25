@@ -1,6 +1,6 @@
 {
   "type": "allowlist",
-  "packages": ["github.com/trypophob1a/cliargstojson/pkg"],
+  "packages": ["github.com/trypophob1a/cliargstojson/pkg", "github.com/sirupsen/logrus"],
   "packageErrorMessages": {
     "github.com/trypophob1a/cliargstojson/pkg": "Please use \"github.com/trypophob1a/cliargstojson/pkg\""
   },
