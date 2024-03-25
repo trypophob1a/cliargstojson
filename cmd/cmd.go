@@ -1,5 +1,5 @@
 package cmd
 
-func Cmd() {
+func CMD() {
 	println("hello")
 }
